@@ -21,7 +21,6 @@ from latch.types import (
     LatchRule
 )
 
-@dataclass_json
 @dataclass
 class Run:
     run_id: str
@@ -98,7 +97,7 @@ def archr_task(
     )
 
 metadata = LatchMetadata(
-    display_name='archr',
+    display_name='archr (Registry)',
     author=LatchAuthor(
         name='James McGann',
         email='jpaulmcgann@gmail.com',
@@ -109,6 +108,7 @@ metadata = LatchMetadata(
     parameters={
         'runs': LatchParameter(
             display_name='runs',
+            samplesheet=True,
             description='List of runs to be analyzed; each run must contain a \
                          run_id and fragments.tsv file; optional: condition, \
                          tissue position file for filtering on/off tissue, \
@@ -188,7 +188,7 @@ metadata = LatchMetadata(
 )
 
 @workflow(metadata)
-def archr_workflow(
+def archr_registry_workflow(
     runs: List[Run],
     genome: Genome,
     project_name: str,
@@ -224,7 +224,7 @@ def archr_workflow(
     )
 
 LaunchPlan(
-    archr_workflow,
+    archr_registry_workflow,
     'defaults',
     {
     'runs' : [
@@ -242,7 +242,7 @@ LaunchPlan(
 )
 
 if __name__ == '__main__':
-    archr_workflow(
+    archr_registry_workflow(
     runs=[
     Run(
         'dev',
