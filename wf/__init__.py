@@ -98,7 +98,7 @@ def archr_task(
     )
 
 metadata = LatchMetadata(
-    display_name='archr',
+    display_name='optimize archr',
     author=LatchAuthor(
         name='AtlasXomics, Inc.',
         email='jamesm@atlasxomics.com',
