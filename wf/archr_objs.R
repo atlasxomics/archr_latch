@@ -1,6 +1,7 @@
 library(ArchR)
 library(ggplot2)
 library(harmony)
+library(patchwork)
 library(Seurat)
 
 # globals ---------------------------------------------------------------------
@@ -125,21 +126,15 @@ for (run in runs) {
 }
 proj <- proj[proj$cellNames %in% all_ontissue]
 
-# save .rds and ArrowFiles for unprocessed project
-saveArchRProject(ArchRProj = proj)
-
 # iterate plotting ------------------------------------------------------------
 
-# init 'dict' to store dimplots
+# init 'dict' to store dimplots, vector for umap plots
+umapplots <- c()
 dimplots <- list()
 
 for (i in seq_along((lsi_varfeatures))) {
 
   varfeatures <- lsi_varfeatures[i]
-
-  # make a new output directory to store data for each varfeature
-  out_i <- paste0(project_name, "_", varfeatures)
-  dir.create(out_i)
 
   # work with a copy of the original project
   proj_i <- addIterativeLSI(
@@ -185,24 +180,52 @@ for (i in seq_along((lsi_varfeatures))) {
     metric = "cosine",
     force = TRUE
   )
+
+  # plot umaps by sample and cluster
   p1 <- plotEmbedding(
     ArchRProj = proj_i,
     colorBy = "cellColData",
     name = "Sample",
     embedding = "UMAP"
+  ) +
+  ggtitle(
+    paste0(
+      "colored by Cluster:\nvarfeatures=",
+      varfeatures,
+      ", clustering_resolution=",
+      clustering_resolution
+    )
+  ) +
+  theme(plot.title = element_text(size=10)) +
+  theme(legend.key.size = unit(.5, "cm")) +
+  theme(legend.text=element_text(size=6)) +
+  guides(colour = guide_legend(
+    override.aes = list(size = 2, alpha = 1),
+    nrow = 2)
   )
+
   p2 <- plotEmbedding(
     ArchRProj = proj_i,
     colorBy = "cellColData",
     name = "Clusters",
     embedding = "UMAP"
+  ) +
+  ggtitle(
+    paste0(
+      "colored by Cluster:\nvarfeatures=",
+      varfeatures,
+      ", clustering_resolution=",
+      clustering_resolution
+    )
+  ) +
+  theme(plot.title = element_text(size=10)) +
+  theme(legend.key.size = unit(.5, "cm")) +
+  theme(legend.text=element_text(size=6)) +
+  guides(colour = guide_legend(
+    override.aes = list(size = 2, alpha = 1),
+    nrow = 2)
   )
-  ggsave(
-    paste0(out_i, "/umap_", varfeatures, ".pdf"),
-    p1 + p2,
-    width = 10,
-    height = 10
-  )
+  umapplots[[i]] <- p1 + p2
 
   proj_i <- addImputeWeights(proj_i)
 
@@ -229,17 +252,6 @@ for (i in seq_along((lsi_varfeatures))) {
   gene_row_names <- gene_matrix@elementMetadata$name
   rownames(matrix) <- gene_row_names
 
-  # create a new ArchRProject for each varfeatures, in dir out_i
-  saveArchRProject(
-    ArchRProj = proj_i,
-    outputDirectory = paste0(
-      out_i,
-      "/",
-      out_i,
-      "_ArchRProject"
-    )
-  )
-
   seurat_objs <- c()
   for (run in runs) {
 
@@ -249,24 +261,19 @@ for (i in seq_along((lsi_varfeatures))) {
       metadata = metadata,
       spatial_path = run[5]
     )
-
-    saveRDS(
-      obj,
-      file = paste0(
-        out_i,
-        "/",
-        run[1],
-        "_SeuratObj_",
-        varfeatures,
-        ".rds"
-      )
-    )
     seurat_objs <- c(seurat_objs, obj)
 
     p1 <- spatial_plot(obj, name = paste(run[1], varfeatures))
     dimplots[[run[1]]][[i]] <- p1
     }
 }
+
+# save umap plots in a single pdf
+pdf("umap_plots.pdf")
+for (i in seq_along((umapplots))) {
+  print(umapplots[[i]])
+}
+dev.off()
 
 # save spatialdim plots in a single pdf
 pdf("spatialdim_plots.pdf")

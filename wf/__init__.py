@@ -1,7 +1,9 @@
-''' Workflow for converting ATAC fragments (fragments.tss.gz) into ArchR
-objects for downstream analysis; additionally, generates UMAP and
-SpatialDimPlots for a list of lsi_varfeatures.
+''' 
+Workflow for testing multiple ArchR parameter sets on ATAC fragments
+files (fragments.tsv.gz); outputs umap plots, spatialdim plots, and
+tss/fragment heatmaps.
 '''
+
 import glob
 import subprocess
 
@@ -83,12 +85,11 @@ def archr_task(
     subprocess.run(_archr_cmd)
 
     out_dir = project_name
-    subprocess.run(['mkdir', f'{out_dir}'])
+    subprocess.run(['mkdir', out_dir])
 
-    project_dirs = glob.glob(f'{project_name}_*')
     figures = glob.glob('*_plots.pdf')
 
-    _mv_cmd = ['mv'] + project_dirs + figures + [out_dir]
+    _mv_cmd = ['mv'] + figures + [out_dir]
 
     subprocess.run(_mv_cmd)
 
@@ -238,3 +239,21 @@ LaunchPlan(
     'genome' : Genome.hg38
     },
 )
+
+if __name__ == '__main__':
+    archr_workflow(
+    runs=[
+    Run(
+        'dev',
+        LatchFile('latch:///atac_outs/ds_D01033_NG01681/outs/ds_D01033_NG01681_fragments.tsv.gz'),
+        'control',
+        LatchDir('latch:///spatials/demo/spatial'),
+        LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv')
+        )
+    ],
+    project_name='dev',
+    genome=Genome.hg38,
+    lsi_varfeatures=[25000, 10000],
+    min_TSS=1.5,
+    min_frags=2500, 
+    )
