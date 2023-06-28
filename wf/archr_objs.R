@@ -190,7 +190,7 @@ for (i in seq_along((lsi_varfeatures))) {
   ) +
   ggtitle(
     paste0(
-      "colored by Cluster:\nvarfeatures=",
+      "colored by Sample:\nvarfeatures=",
       varfeatures,
       ", clustering_resolution=",
       clustering_resolution
