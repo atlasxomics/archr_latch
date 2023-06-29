@@ -14,11 +14,17 @@ tile_size <- as.integer(args[3])
 min_tss <- as.numeric(args[4])
 min_frags <- as.integer(args[5])
 lsi_iterations <- as.integer(args[6])
-lsi_resolution <- as.numeric(args[7])
+
+for (i in strsplit(args[7], ",")) {
+  lsi_resolution <- as.numeric(i)
+}
 for (i in strsplit(args[8], ",")) {
   lsi_varfeatures <- as.integer(i)
   }
-clustering_resolution <- as.numeric(args[9])
+for (i in strsplit(args[9], ",")) {
+  clustering_resolution <- as.numeric(i)
+}
+
 umap_mindist <- as.numeric(args[10])
 
 runs <- strsplit(args[11:length(args)], ",")
@@ -28,6 +34,8 @@ for (run in runs) {
   }
 
 out_dir <- paste0(project_name, "_ArchRProject")
+
+# functions --------------------------------------------------------------------
 
 build_atlas_seurat_object <- function(
   run_id,
@@ -104,7 +112,7 @@ arrow_files <- createArrowFiles(
    offsetPlus = 0,
    offsetMinus = 0,
    TileMatParams = list(tileSize = tile_size)
-)
+
 
 proj <- ArchRProject(
   ArrowFiles = arrow_files,
@@ -128,13 +136,26 @@ proj <- proj[proj$cellNames %in% all_ontissue]
 
 # iterate plotting ------------------------------------------------------------
 
+# make dataframe with  Cartesian Product of three parameter lists
+parameter_set <- expand.grid(
+  lsi_resolution,
+  lsi_varfeatures,
+  clustering_resolution
+)
+print(parameter_set)
+
 # init 'dict' to store dimplots, vector for umap plots
 umapplots <- c()
 dimplots <- list()
 
-for (i in seq_along((lsi_varfeatures))) {
+for (row in 1:nrow(parameter_set)) {
 
-  varfeatures <- lsi_varfeatures[i]
+  set <- parameter_set[c(row),c(1,2,3)]
+  lsi_resolution_i <- set[[1]]
+  varfeatures_i <- set[[2]]
+  clustering_resolution_i <- set[[3]]
+
+  print(c(lsi_resolution_i, varfeatures_i, clustering_resolution_i))
 
   # work with a copy of the original project
   proj_i <- addIterativeLSI(
@@ -143,11 +164,11 @@ for (i in seq_along((lsi_varfeatures))) {
     name = "IterativeLSI",
     iterations = lsi_iterations,
     clusterParams = list(
-      resolution = c(lsi_resolution),
+      resolution = c(lsi_resolution_i),
       sampleCells = 10000,
       n.start = 10
     ),
-    varFeatures = varfeatures,
+    varFeatures = varfeatures_i,
     dimsToUse = 1:30,
     force = TRUE
   )
@@ -168,7 +189,7 @@ for (i in seq_along((lsi_varfeatures))) {
     reducedDims = name,
     method = "Seurat",
     name = "Clusters",
-    resolution = c(clustering_resolution),
+    resolution = c(clustering_resolution_i),
     force = TRUE
   )
   proj_i <- addUMAP(
@@ -189,16 +210,16 @@ for (i in seq_along((lsi_varfeatures))) {
     embedding = "UMAP"
   ) +
   ggtitle(
-    paste0(
-      "colored by Sample:\nvarfeatures=",
-      varfeatures,
-      ", clustering_resolution=",
-      clustering_resolution
+    paste(
+      "colored by Sample",
+      lsi_resolution_i,
+      varfeatures_i,
+      clustering_resolution_i
     )
   ) +
-  theme(plot.title = element_text(size=10)) +
+  theme(plot.title = element_text(size = 10)) +
   theme(legend.key.size = unit(.5, "cm")) +
-  theme(legend.text=element_text(size=6)) +
+  theme(legend.text=element_text(size = 6)) +
   guides(colour = guide_legend(
     override.aes = list(size = 2, alpha = 1),
     nrow = 2)
@@ -211,21 +232,21 @@ for (i in seq_along((lsi_varfeatures))) {
     embedding = "UMAP"
   ) +
   ggtitle(
-    paste0(
-      "colored by Cluster:\nvarfeatures=",
-      varfeatures,
-      ", clustering_resolution=",
-      clustering_resolution
+    paste(
+      "colored by Cluster",
+      lsi_resolution_i,
+      varfeatures_i,
+      clustering_resolution_i
     )
   ) +
-  theme(plot.title = element_text(size=10)) +
+  theme(plot.title = element_text(size = 10)) +
   theme(legend.key.size = unit(.5, "cm")) +
-  theme(legend.text=element_text(size=6)) +
+  theme(legend.text=element_text(size = 6)) +
   guides(colour = guide_legend(
     override.aes = list(size = 2, alpha = 1),
     nrow = 2)
   )
-  umapplots[[i]] <- p1 + p2
+  umapplots[[row]] <- p1 + p2
 
   proj_i <- addImputeWeights(proj_i)
 
@@ -263,8 +284,16 @@ for (i in seq_along((lsi_varfeatures))) {
     )
     seurat_objs <- c(seurat_objs, obj)
 
-    p1 <- spatial_plot(obj, name = paste(run[1], varfeatures))
-    dimplots[[run[1]]][[i]] <- p1
+    p1 <- spatial_plot(
+      obj,
+      name = paste(
+        run[1],
+        lsi_resolution_i,
+        varfeatures_i,
+        clustering_resolution_i
+      )
+    )
+    dimplots[[run[1]]][[row]] <- p1
     }
 }
 

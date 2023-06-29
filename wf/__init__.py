@@ -49,9 +49,9 @@ def archr_task(
     min_TSS: float,
     min_frags: int,
     lsi_iterations: int,
-    lsi_resolution: float,
+    lsi_resolution: List[float],
     lsi_varfeatures: List[int],
-    clustering_resolution: float,
+    clustering_resolution: List[float],
     umap_mindist: float
 ) -> LatchDir:
     
@@ -64,9 +64,9 @@ def archr_task(
         f'{min_TSS}',
         f'{min_frags}',
         f'{lsi_iterations}',
-        f'{lsi_resolution}',
+        f'{",".join(str(i) for i in lsi_resolution)}',
         f'{",".join(str(i) for i in lsi_varfeatures)}',
-        f'{clustering_resolution}',
+        f'{",".join(str(i) for i in clustering_resolution)}',
         f'{umap_mindist}',
     ]
 
@@ -197,9 +197,9 @@ def archr_workflow(
     min_TSS: float=2.0,
     min_frags: int=0,
     lsi_iterations: int=2,
-    lsi_resolution: float=0.5,
+    lsi_resolution: List[float]=[0.5],
     lsi_varfeatures: List[int]=[25000],
-    clustering_resolution: float=1.0,
+    clustering_resolution: List[float]=[1.0],
     umap_mindist: float=0.0
 ) -> LatchDir:
     '''Workflow for converting fragment.tsv.gz files from to ArchRProjects.
@@ -253,7 +253,9 @@ if __name__ == '__main__':
     ],
     project_name='dev',
     genome=Genome.hg38,
+    lsi_resolution=[0.5, 0.6],
     lsi_varfeatures=[25000, 10000],
+    clustering_resolution=[1.0],
     min_TSS=1.5,
     min_frags=2500, 
     )
