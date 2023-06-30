@@ -1,7 +1,9 @@
-''' Workflow for converting ATAC fragments (fragments.tss.gz) into ArchR
-objects for downstream analysis; additionally, generates UMAP and
-SpatialDimPlots for a list of lsi_varfeatures.
+''' 
+Workflow for testing multiple ArchR parameter sets on ATAC fragments
+files (fragments.tsv.gz); outputs umap plots, spatialdim plots, and
+tss/fragment heatmaps.
 '''
+
 import glob
 import subprocess
 
@@ -47,9 +49,9 @@ def archr_task(
     min_TSS: float,
     min_frags: int,
     lsi_iterations: int,
-    lsi_resolution: float,
+    lsi_resolution: List[float],
     lsi_varfeatures: List[int],
-    clustering_resolution: float,
+    clustering_resolution: List[float],
     umap_mindist: float
 ) -> LatchDir:
     
@@ -62,9 +64,9 @@ def archr_task(
         f'{min_TSS}',
         f'{min_frags}',
         f'{lsi_iterations}',
-        f'{lsi_resolution}',
+        f'{",".join(str(i) for i in lsi_resolution)}',
         f'{",".join(str(i) for i in lsi_varfeatures)}',
-        f'{clustering_resolution}',
+        f'{",".join(str(i) for i in clustering_resolution)}',
         f'{umap_mindist}',
     ]
 
@@ -83,18 +85,17 @@ def archr_task(
     subprocess.run(_archr_cmd)
 
     out_dir = project_name
-    subprocess.run(['mkdir', f'{out_dir}'])
+    subprocess.run(['mkdir', out_dir])
 
-    project_dirs = glob.glob(f'{project_name}_*')
     figures = glob.glob('*_plots.pdf')
 
-    _mv_cmd = ['mv'] + project_dirs + figures + [out_dir]
+    _mv_cmd = ['mv'] + figures + [out_dir]
 
     subprocess.run(_mv_cmd)
 
     return LatchDir(
         f'/root/{out_dir}',
-        f'latch:///archr_outs/{out_dir}'
+        f'latch:///optimize_outs/{out_dir}'
     )
 
 metadata = LatchMetadata(
@@ -117,7 +118,7 @@ metadata = LatchMetadata(
         ),
         'project_name' : LatchParameter(
             display_name='project name',
-            description='Name of output directory in archr_outs/',
+            description='Name of output directory in optimize_outs/',
             batch_table_column=True,
             rules=[
                 LatchRule(
@@ -196,9 +197,9 @@ def archr_workflow(
     min_TSS: float=2.0,
     min_frags: int=0,
     lsi_iterations: int=2,
-    lsi_resolution: float=0.5,
+    lsi_resolution: List[float]=[0.5],
     lsi_varfeatures: List[int]=[25000],
-    clustering_resolution: float=1.0,
+    clustering_resolution: List[float]=[1.0],
     umap_mindist: float=0.0
 ) -> LatchDir:
     '''Workflow for converting fragment.tsv.gz files from to ArchRProjects.
@@ -238,3 +239,23 @@ LaunchPlan(
     'genome' : Genome.hg38
     },
 )
+
+if __name__ == '__main__':
+    archr_workflow(
+    runs=[
+    Run(
+        'dev',
+        LatchFile('latch:///atac_outs/ds_D01033_NG01681/outs/ds_D01033_NG01681_fragments.tsv.gz'),
+        'control',
+        LatchDir('latch:///spatials/demo/spatial'),
+        LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv')
+        )
+    ],
+    project_name='dev',
+    genome=Genome.hg38,
+    lsi_resolution=[0.5, 0.6],
+    lsi_varfeatures=[25000, 10000],
+    clustering_resolution=[1.0],
+    min_TSS=1.5,
+    min_frags=2500, 
+    )
