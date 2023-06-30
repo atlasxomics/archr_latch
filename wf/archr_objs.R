@@ -112,6 +112,7 @@ arrow_files <- createArrowFiles(
    offsetPlus = 0,
    offsetMinus = 0,
    TileMatParams = list(tileSize = tile_size)
+)
 
 
 proj <- ArchRProject(

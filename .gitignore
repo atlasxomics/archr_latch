@@ -11,3 +11,4 @@ Users
 .vscode
 bar/
 config
+creds.py

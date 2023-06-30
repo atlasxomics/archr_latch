@@ -5,6 +5,7 @@ tss/fragment heatmaps.
 '''
 
 import glob
+import re
 import subprocess
 
 from dataclasses import dataclass
@@ -12,7 +13,7 @@ from dataclasses_json import dataclass_json
 from enum import Enum
 from typing import List
 
-from latch import medium_task, workflow
+from latch import medium_task, small_task, workflow
 from latch.resources.launch_plan import LaunchPlan
 from latch.types import (
     LatchAuthor,
@@ -22,6 +23,8 @@ from latch.types import (
     LatchParameter,
     LatchRule
 )
+
+import wf.lims as lims
 
 @dataclass_json
 @dataclass
@@ -97,6 +100,40 @@ def archr_task(
         f'/root/{out_dir}',
         f'latch:///optimize_outs/{out_dir}'
     )
+
+@small_task(retries=0)
+def lims_task(
+    project_name: str
+    upload: bool,
+) -> LatchDir:
+
+    if upload:
+    
+        csv = LatchFile(f'latch:///optimize_outs/{project_name}/archr_qc.csv')
+        
+        slims = lims.slims_init()
+        results = lims.csv_to_dict(csv)
+    
+        payload = {lims.mapping[key]:value for (key, value) in results.items()
+                    if key in lims.mapping.keys() and value not in lims.NA}
+    
+        if ng_id:
+            pk = lims.get_pk(ng_id, slims)
+        else:
+            try:
+                pk = lims.get_pk(run_id.split('_')[-1], slims)
+            except IndexError:
+                print('Invalid SLIMS ng_id.')
+    
+        payload['rslt_fk_content'] = pk
+        payload['rslt_fk_test'] = 39
+        payload['rslt_cf_value'] = 'upload'
+
+        print(lims.push_result(payload, slims))
+    
+        return results_dir
+
+    return results_dir
 
 metadata = LatchMetadata(
     display_name='optimize archr',
