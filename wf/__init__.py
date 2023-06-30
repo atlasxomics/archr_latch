@@ -95,7 +95,7 @@ def archr_task(
 
     return LatchDir(
         f'/root/{out_dir}',
-        f'latch:///archr_outs/{out_dir}'
+        f'latch:///optimize_outs/{out_dir}'
     )
 
 metadata = LatchMetadata(
@@ -118,7 +118,7 @@ metadata = LatchMetadata(
         ),
         'project_name' : LatchParameter(
             display_name='project name',
-            description='Name of output directory in archr_outs/',
+            description='Name of output directory in optimize_outs/',
             batch_table_column=True,
             rules=[
                 LatchRule(
