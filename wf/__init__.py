@@ -89,7 +89,7 @@ def archr_task(
     subprocess.run(_archr_cmd)
 
     out_dir = project_name
-    # subprocess.run(['mkdir', out_dir])
+    subprocess.run(['mkdir', out_dir])
 
     figures = glob.glob('*_plots.pdf')
 
@@ -129,10 +129,12 @@ def lims_task(
 
                     ng_id = re.findall(ng_re, run_id)[0]
                     print(f'Uploading results for {ng_id}')
+                    
                     try:
-                         pk = lims.get_pk(ng_id, slims)
+                        pk = lims.get_pk(ng_id, slims)
                     except IndexError:
-                        print('Invalid SLIMS ng_id.')
+                        print(f'Invalid SLIMS ng_id: {ng_id}.')
+                        continue
             
                     payload = {}
                     payload['rslt_fk_content'] = pk
@@ -302,24 +304,3 @@ LaunchPlan(
     'upload' : False
     },
 )
-
-if __name__ == '__main__':
-    archr_workflow(
-        runs=[
-            Run(
-            'D01033_NG01681',
-            LatchFile('latch://13502.account/atac_outs/ds_D01033_NG01681/outs/ds_D01033_NG01681_fragments.tsv.gz'),
-            'control',
-            LatchDir('latch://13502.account/atx-illumina-1682977469.0200825/Images/D1033/spatial/'),
-            LatchFile('latch://13502.account/atx-illumina-1682977469.0200825/Images/D1033/spatial/tissue_positions_list.csv')
-            )
-        ],
-        project_name='dev',
-        genome=Genome.hg38,
-        upload=True,
-        lsi_resolution=[0.5],
-        lsi_varfeatures=[25000],
-        clustering_resolution=[1.0],
-        min_TSS=1.5,
-        min_frags=2500, 
-    )
