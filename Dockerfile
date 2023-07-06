@@ -47,6 +47,8 @@ RUN R -e "library('ArchR'); ArchR::installExtraPackages()"
 RUN R -e "BiocManager::install('BSgenome.Mmusculus.UCSC.mm10')"
 RUN R -e "BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')"
 
+RUN python3 -m pip install slims-python-api
+
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
 # correctly with latch.

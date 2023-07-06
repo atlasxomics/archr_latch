@@ -1,3 +1,5 @@
 # latch stuff
 .latch_report.tar.gz
 .logs/
+tss_testing.ipynb
+*-checkpoint.ipynb

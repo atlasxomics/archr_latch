@@ -11,3 +11,7 @@ Users
 .vscode
 bar/
 config
+creds.py
+tss_testing.ipynb
+jump_key
+*-checkpoint.ipynb
