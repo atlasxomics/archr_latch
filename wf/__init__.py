@@ -11,6 +11,7 @@ import subprocess
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from enum import Enum
+from pathlib import Path
 from typing import List
 
 from latch import medium_task, small_task, workflow
@@ -88,11 +89,11 @@ def archr_task(
     subprocess.run(_archr_cmd)
 
     out_dir = project_name
-    subprocess.run(['mkdir', out_dir])
+    # subprocess.run(['mkdir', out_dir])
 
     figures = glob.glob('*_plots.pdf')
 
-    _mv_cmd = ['mv'] + figures + [out_dir]
+    _mv_cmd = ['mv'] + figures + ['medians.csv'] + [out_dir]
 
     subprocess.run(_mv_cmd)
 
@@ -103,34 +104,49 @@ def archr_task(
 
 @small_task(retries=0)
 def lims_task(
-    project_name: str
+    results_dir: LatchDir,
     upload: bool,
 ) -> LatchDir:
 
     if upload:
     
-        csv = LatchFile(f'latch:///optimize_outs/{project_name}/archr_qc.csv')
-        
+        csv_path = Path(results_dir.local_path + f'/medians.csv').resolve()
         slims = lims.slims_init()
-        results = lims.csv_to_dict(csv)
-    
-        payload = {lims.mapping[key]:value for (key, value) in results.items()
-                    if key in lims.mapping.keys() and value not in lims.NA}
-    
-        if ng_id:
-            pk = lims.get_pk(ng_id, slims)
-        else:
-            try:
-                pk = lims.get_pk(run_id.split('_')[-1], slims)
-            except IndexError:
-                print('Invalid SLIMS ng_id.')
-    
-        payload['rslt_fk_content'] = pk
-        payload['rslt_fk_test'] = 39
-        payload['rslt_cf_value'] = 'upload'
+        ng_re = re.compile('NG[0-9]{5}')
 
-        print(lims.push_result(payload, slims))
-    
+        with open(csv_path, 'r') as f:
+
+            f.readline()
+            lines = [
+                tuple(line.split(',')) for line in
+                [line.rstrip() for line in f.readlines()]
+                ]
+            
+            for line in lines:
+                run_id, tss, nfrags = line
+
+                if re.findall(ng_re, run_id):
+
+                    ng_id = re.findall(ng_re, run_id)[0]
+                    print(f'Uploading results for {ng_id}')
+                    try:
+                         pk = lims.get_pk(ng_id, slims)
+                    except IndexError:
+                        print('Invalid SLIMS ng_id.')
+            
+                    payload = {}
+                    payload['rslt_fk_content'] = pk
+                    payload['rslt_fk_test'] = 55
+                    payload['rslt_value'] = 'upload'
+                    payload['rslt_cf_medianTssScore'] = tss
+                    payload['rslt_cf_medianNfrags'] = nfrags
+        
+                    lims.push_result(payload, slims)
+                    print("Upload to SLIMS succeeded.")
+        
+                else:
+                    print(f"No NG_ID found for run {run_id}; upload failed.")
+
         return results_dir
 
     return results_dir
@@ -168,6 +184,12 @@ metadata = LatchMetadata(
             display_name='genome',
             description='Reference genome to be used for geneAnnotation and \
                         genomeAnnotation',
+            batch_table_column=True,
+        ),
+        'upload': LatchParameter(
+            display_name='upload to SLIMS',
+            description='Upload median TSS and nFrags for each run to SLIMS; \
+                        run_id MUST contain a valid NG ID (ie. NG12345).',
             batch_table_column=True,
         ),
         'tile_size': LatchParameter(
@@ -230,6 +252,7 @@ def archr_workflow(
     runs: List[Run],
     genome: Genome,
     project_name: str,
+    upload: bool=False,
     tile_size: int=5000,
     min_TSS: float=2.0,
     min_frags: int=0,
@@ -245,7 +268,7 @@ def archr_workflow(
     - See Deng, Y. et al 2022.
     '''
 
-    return archr_task(
+    results_dir = archr_task(
         runs=runs,
         project_name=project_name,
         genome=genome,
@@ -259,6 +282,8 @@ def archr_workflow(
         umap_mindist=umap_mindist
     )
 
+    return lims_task(results_dir=results_dir, upload=upload)
+
 LaunchPlan(
     archr_workflow,
     'defaults',
@@ -266,33 +291,35 @@ LaunchPlan(
     'runs' : [
         Run(
             'default',
-            LatchFile('latch:///atac_outs/demo/outs/demo_fragments.tsv.gz'),
+            LatchFile('latch://13502.account/atac_outs/demo/outs/demo_fragments.tsv.gz'),
             'demo',
-            LatchDir('latch:///spatials/demo/spatial'),
-            LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv'),
+            LatchDir('latch://13502.account/spatials/demo/spatial'),
+            LatchFile('latch://13502.account/spatials/demo/spatial/tissue_positions_list.csv'),
             )
         ],
     'project_name' : 'demo',
-    'genome' : Genome.hg38
+    'genome' : Genome.hg38,
+    'upload' : False
     },
 )
 
 if __name__ == '__main__':
     archr_workflow(
-    runs=[
-    Run(
-        'dev',
-        LatchFile('latch:///atac_outs/ds_D01033_NG01681/outs/ds_D01033_NG01681_fragments.tsv.gz'),
-        'control',
-        LatchDir('latch:///spatials/demo/spatial'),
-        LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv')
-        )
-    ],
-    project_name='dev',
-    genome=Genome.hg38,
-    lsi_resolution=[0.5, 0.6],
-    lsi_varfeatures=[25000, 10000],
-    clustering_resolution=[1.0],
-    min_TSS=1.5,
-    min_frags=2500, 
+        runs=[
+            Run(
+            'D01033_NG01681',
+            LatchFile('latch://13502.account/atac_outs/ds_D01033_NG01681/outs/ds_D01033_NG01681_fragments.tsv.gz'),
+            'control',
+            LatchDir('latch://13502.account/atx-illumina-1682977469.0200825/Images/D1033/spatial/'),
+            LatchFile('latch://13502.account/atx-illumina-1682977469.0200825/Images/D1033/spatial/tissue_positions_list.csv')
+            )
+        ],
+        project_name='dev',
+        genome=Genome.hg38,
+        upload=True,
+        lsi_resolution=[0.5],
+        lsi_varfeatures=[25000],
+        clustering_resolution=[1.0],
+        min_TSS=1.5,
+        min_frags=2500, 
     )

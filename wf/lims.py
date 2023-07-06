@@ -1,3 +1,4 @@
+from slims.criteria import equals
 from slims.slims import Slims
 
 from wf.creds import username, password

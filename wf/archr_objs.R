@@ -135,6 +135,23 @@ for (run in runs) {
 }
 proj <- proj[proj$cellNames %in% all_ontissue]
 
+# Create csv with 'run_id | median_tss | nfrags'
+metadata <- getCellColData(ArchRProj = proj)
+tss <- aggregate(
+  metadata@listData$TSSEnrichment,
+  by = list(metadata@listData$Sample),
+  FUN = median
+)
+nfrags <- aggregate(
+  metadata@listData$nFrags,
+  by = list(metadata@listData$Sample),
+  FUN = median
+)
+medians <- merge(tss, nfrags, by = "Group.1") 
+names(medians) <- c("run_id", "median_TSS", "median_fragments")
+
+write.csv(medians, file = "medians.csv", row.names = FALSE)
+
 # iterate plotting ------------------------------------------------------------
 
 # make dataframe with  Cartesian Product of three parameter lists
