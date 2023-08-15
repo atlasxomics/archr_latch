@@ -444,10 +444,10 @@ LaunchPlan(
     'runs' : [
         Run(
             'default',
-            LatchFile('latch://13502.account/atac_outs/demo/outs/demo_fragments.tsv.gz'),
+            LatchFile('latch:///atac_outs/demo/outs/demo_fragments.tsv.gz'),
             'demo',
-            LatchDir('latch://13502.account/spatials/demo/spatial'),
-            LatchFile('latch://13502.account/spatials/demo/spatial/tissue_positions_list.csv'),
+            LatchDir('latch:///spatials/demo/spatial'),
+            LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv'),
             )
         ],
     'project_name' : 'demo',
