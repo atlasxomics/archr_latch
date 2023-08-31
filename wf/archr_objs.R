@@ -114,7 +114,6 @@ arrow_files <- createArrowFiles(
    TileMatParams = list(tileSize = tile_size)
 )
 
-
 proj <- ArchRProject(
   ArrowFiles = arrow_files,
   outputDirectory = out_dir
@@ -168,7 +167,7 @@ dimplots <- list()
 
 for (row in 1:nrow(parameter_set)) {
 
-  set <- parameter_set[c(row),c(1,2,3)]
+  set <- parameter_set[c(row), c(1, 2, 3)]
   lsi_resolution_i <- set[[1]]
   varfeatures_i <- set[[2]]
   clustering_resolution_i <- set[[3]]
@@ -237,7 +236,7 @@ for (row in 1:nrow(parameter_set)) {
   ) +
   theme(plot.title = element_text(size = 10)) +
   theme(legend.key.size = unit(.5, "cm")) +
-  theme(legend.text=element_text(size = 6)) +
+  theme(legend.text = element_text(size = 6)) +
   guides(colour = guide_legend(
     override.aes = list(size = 2, alpha = 1),
     nrow = 2)
@@ -259,7 +258,7 @@ for (row in 1:nrow(parameter_set)) {
   ) +
   theme(plot.title = element_text(size = 10)) +
   theme(legend.key.size = unit(.5, "cm")) +
-  theme(legend.text=element_text(size = 6)) +
+  theme(legend.text = element_text(size = 6)) +
   guides(colour = guide_legend(
     override.aes = list(size = 2, alpha = 1),
     nrow = 2)

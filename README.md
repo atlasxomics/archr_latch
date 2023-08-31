@@ -7,7 +7,7 @@
 <br>
 <br>
 
-**optimize archr** is a [latch.bio]() workflow for assessing spatial epigenomic data
+**optimize archr** is a [latch.bio](https://latch.bio/) workflow for assessing spatial epigenomic data
 generated via [DBiT-seq](https://www.nature.com/articles/s41586-022-05094-1).  Provided fragments from a single-cell ATAC-seq preprocessing and alignment workflow and spatial information, **optimize archr** returns plots and summary statistics to inform further processing.
 
 The workflow utilizes [ArchR](https://www.archrproject.com/articles/Articles/tutorial.html) to generate QC parameters (TSS, fragments per cell) and perform dimensionality reduction/clustering, and [Seurat](https://satijalab.org/seurat/) to spatially align the data.  The workflow can take data from either a single tissue-sample analyzed via DBiT-seq or multiple tissue-samples; in ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'.  All Runs input to **optimize archr** are merged into a single ArchRProject for analysis.  
