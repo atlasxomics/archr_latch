@@ -1,3 +1,4 @@
+.latch
 .ssh_key
 .ssh_key.pub
 fragments.tsv.gz
