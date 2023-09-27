@@ -22,15 +22,16 @@ class Run:
     )
 
 @small_task(retries=0)
-def upload_to_registry(runs: List[Run] , archr_project: LatchDir, table_id: str = "761"):
-    table = Table(table_id)
+def upload_to_registry(runs: List[Run] , archr_project: LatchDir, run_table_id: str = "761", project_table_id: str = "779"):
+    run_table = Table(run_table_id)
+    project_table = Table(project_table_id)
     try:
-        with table.update() as updater:
+        with run_table.update() as updater:
             for run in runs:
                 message(
                     "info",
                     {
-                        "title": f"Updating run {run.run_id} in registry table ID {table_id}",
+                        "title": f"Updating run {run.run_id} in registry table ID {run_table_id}",
                         "body": f"Run {run.run_id}, condition {run.condition}",
                     },
                 )
@@ -40,6 +41,13 @@ def upload_to_registry(runs: List[Run] , archr_project: LatchDir, table_id: str 
                     condition=run.condition,
                     spatial_directory=run.spatial_dir,
                     positions_file=run.positions_file,
+                    optimize_outs=archr_project
+                )
+        
+        with project_table.update() as updater:
+            for run in runs:
+                updater.upsert_record(
+                    run.run_id,
                     optimize_outs=archr_project
                 )
     except Exception as err:
@@ -82,5 +90,6 @@ if __name__ == "__main__":
             )
         ],
         archr_project=LatchDir("latch://13502.account/ArchRProjects/Babeyev"),
-        table_id="761",
+        run_table_id="761",
+        project_table_id="779"
     )

@@ -234,9 +234,13 @@ metadata = LatchMetadata(
             batch_table_column=True,
             hidden=True
         ),
-        'table_id': LatchParameter(
+        'run_table_id': LatchParameter(
             display_name='Registry Table ID',
             description='The runs will be updated in Registry with its corresponding condition, spatial directory, condition, and location of the optimized output archR project.'
+        ),
+        'project_table_id': LatchParameter(
+            display_name='The ID of the SOWs Registry table',
+            description='The optimized ArchR project will be inserted into the SOW table for the corresponding runs.'
         )                  
     },
     tags=[],
@@ -247,7 +251,8 @@ def archr_workflow(
     runs: List[Run],
     genome: Genome,
     project_name: str,
-    table_id: str = "761",
+    run_table_id: str = "761",
+    project_table_id: str = "779",
     upload: bool=False,
     tile_size: int=5000,
     min_TSS: float=2.0,
@@ -432,7 +437,8 @@ def archr_workflow(
     upload_to_registry(
         runs=runs,
         archr_project=results_dir,
-        table_id=table_id
+        run_table_id=run_table_id,
+        project_table_id=project_table_id
     )
 
     return lims_task(results_dir=results_dir, upload=upload)
@@ -453,6 +459,7 @@ LaunchPlan(
     'project_name' : 'demo',
     'genome' : Genome.hg38,
     'upload' : False,
-    'table_id': '761'
+    'run_table_id': '761',
+    'project_table_id': '779'
     },
 )
