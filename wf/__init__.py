@@ -8,8 +8,6 @@ import glob
 import re
 import subprocess
 
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
 from enum import Enum
 from pathlib import Path
 from typing import List
@@ -26,19 +24,7 @@ from latch.types import (
 )
 
 import wf.lims as lims
-
-@dataclass_json
-@dataclass
-class Run:
-    run_id: str
-    fragments_file: LatchFile
-    condition: str = 'None'
-    spatial_dir: LatchDir = LatchDir(
-        'latch:///spatials/demo/spatial/'
-    )
-    positions_file: LatchFile = LatchFile(
-        'latch:///spatials/demo/spatial/tissue_positions_list.csv'
-    )
+from wf.registry import Run, upload_to_registry
 
 class Genome(Enum):
     mm10 = 'mm10'
@@ -169,7 +155,8 @@ metadata = LatchMetadata(
                          run_id and fragments.tsv file; optional: condition, \
                          tissue position file for filtering on/off tissue, \
                          spatial folder for SpatialDimPlot.',
-            batch_table_column=True, 
+            batch_table_column=True,
+            samplesheet=True
         ),
         'project_name' : LatchParameter(
             display_name='project name',
@@ -244,7 +231,18 @@ metadata = LatchMetadata(
             description='minDist parameter from addUMAP function.',
             batch_table_column=True,
             hidden=True
-        ),                 
+        ),
+        'run_table_id': LatchParameter(
+            display_name='Registry Table ID',
+            description='The runs will be updated in Registry with its \
+                corresponding condition, spatial directory, condition, and \
+                location of the optimized output archR project.'
+        ),
+        'project_table_id': LatchParameter(
+            display_name='The ID of the SOWs Registry table',
+            description='The optimized ArchR project will be inserted into the \
+                SOW table for the corresponding runs.'
+        )                  
     },
     tags=[],
 )
@@ -254,6 +252,8 @@ def archr_workflow(
     runs: List[Run],
     genome: Genome,
     project_name: str,
+    run_table_id: str = "761",
+    project_table_id: str = "779",
     upload: bool=False,
     tile_size: int=5000,
     min_TSS: float=2.0,
@@ -435,6 +435,13 @@ def archr_workflow(
         umap_mindist=umap_mindist
     )
 
+    upload_to_registry(
+        runs=runs,
+        archr_project=results_dir,
+        run_table_id=run_table_id,
+        project_table_id=project_table_id
+    )
+
     return lims_task(results_dir=results_dir, upload=upload)
 
 LaunchPlan(
@@ -452,6 +459,8 @@ LaunchPlan(
         ],
     'project_name' : 'demo',
     'genome' : Genome.hg38,
-    'upload' : False
+    'upload' : False,
+    'run_table_id': '761',
+    'project_table_id': '779'
     },
 )
