@@ -236,11 +236,14 @@ metadata = LatchMetadata(
         ),
         'run_table_id': LatchParameter(
             display_name='Registry Table ID',
-            description='The runs will be updated in Registry with its corresponding condition, spatial directory, condition, and location of the optimized output archR project.'
+            description='The runs will be updated in Registry with its \
+                corresponding condition, spatial directory, condition, and \
+                location of the optimized output archR project.'
         ),
         'project_table_id': LatchParameter(
             display_name='The ID of the SOWs Registry table',
-            description='The optimized ArchR project will be inserted into the SOW table for the corresponding runs.'
+            description='The optimized ArchR project will be inserted into the \
+                SOW table for the corresponding runs.'
         )                  
     },
     tags=[],

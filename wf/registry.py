@@ -22,7 +22,12 @@ class Run:
     )
 
 @small_task(retries=0)
-def upload_to_registry(runs: List[Run] , archr_project: LatchDir, run_table_id: str = "761", project_table_id: str = "779"):
+def upload_to_registry(
+    runs: List[Run],
+    archr_project: LatchDir,
+    run_table_id: str = "761",
+    project_table_id: str = "779"
+):
     run_table = Table(run_table_id)
     project_table = Table(project_table_id)
     try:
