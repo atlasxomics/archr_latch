@@ -1,4 +1,4 @@
-''' 
+'''
 Workflow for testing multiple ArchR parameter sets on ATAC fragments
 files (fragments.tsv.gz); outputs umap plots, spatialdim plots, and
 tss/fragment heatmaps.
@@ -26,9 +26,11 @@ from latch.types import (
 import wf.lims as lims
 from wf.registry import Run, upload_to_registry
 
+
 class Genome(Enum):
     mm10 = 'mm10'
     hg38 = 'hg38'
+
 
 @medium_task
 def archr_task(
@@ -44,7 +46,7 @@ def archr_task(
     clustering_resolution: List[float],
     umap_mindist: float
 ) -> LatchDir:
-    
+
     _archr_cmd = [
         'Rscript',
         '/root/wf/archr_objs.R',
@@ -62,15 +64,15 @@ def archr_task(
 
     runs = [
         (
-        f'{run.run_id},'
-        f'{run.fragments_file.local_path},'
-        f'{run.condition},'
-        f'{run.positions_file.local_path},'
-        f'{run.spatial_dir.local_path},'
-        )
-    for run in runs
+            f'{run.run_id},'
+            f'{run.fragments_file.local_path},'
+            f'{run.condition},'
+            f'{run.positions_file.local_path},'
+            f'{run.spatial_dir.local_path},'
+            )
+        for run in runs
     ]
-    
+
     _archr_cmd.extend(runs)
     subprocess.run(_archr_cmd)
 
@@ -88,6 +90,7 @@ def archr_task(
         f'latch:///optimize_outs/{out_dir}'
     )
 
+
 @small_task(retries=0)
 def lims_task(
     results_dir: LatchDir,
@@ -95,8 +98,8 @@ def lims_task(
 ) -> LatchDir:
 
     if upload:
-    
-        csv_path = Path(results_dir.local_path + f'/medians.csv').resolve()
+
+        csv_path = Path(results_dir.local_path + '/medians.csv').resolve()
         slims = lims.slims_init()
         ng_re = re.compile('NG[0-9]{5}')
 
@@ -107,7 +110,7 @@ def lims_task(
                 tuple(line.split(',')) for line in
                 [line.rstrip() for line in f.readlines()]
                 ]
-            
+
             for line in lines:
                 run_id, tss, nfrags = line
 
@@ -115,29 +118,30 @@ def lims_task(
 
                     ng_id = re.findall(ng_re, run_id)[0]
                     print(f'Uploading results for {ng_id}')
-                    
+
                     try:
                         pk = lims.get_pk(ng_id, slims)
                     except IndexError:
                         print(f'Invalid SLIMS ng_id: {ng_id}.')
                         continue
-            
+
                     payload = {}
                     payload['rslt_fk_content'] = pk
                     payload['rslt_fk_test'] = 55
                     payload['rslt_value'] = 'upload'
                     payload['rslt_cf_medianTssScore'] = tss
                     payload['rslt_cf_medianNfrags'] = nfrags
-        
+
                     lims.push_result(payload, slims)
                     print("Upload to SLIMS succeeded.")
-        
+
                 else:
                     print(f"No NG_ID found for run {run_id}; upload failed.")
 
         return results_dir
 
     return results_dir
+
 
 metadata = LatchMetadata(
     display_name='optimize archr',
@@ -158,7 +162,7 @@ metadata = LatchMetadata(
             batch_table_column=True,
             samplesheet=True
         ),
-        'project_name' : LatchParameter(
+        'project_name': LatchParameter(
             display_name='project name',
             description='Name of output directory in optimize_outs/',
             batch_table_column=True,
@@ -182,7 +186,7 @@ metadata = LatchMetadata(
             batch_table_column=True,
         ),
         'tile_size': LatchParameter(
-            display_name='tile size', 
+            display_name='tile size',
             description='The size of the tiles used for binning counts in the \
                         TileMatrix.',
             batch_table_column=True,
@@ -191,7 +195,8 @@ metadata = LatchMetadata(
         'min_TSS': LatchParameter(
             display_name='minimum TSS',
             description='The minimum numeric transcription start site (TSS) \
-                        enrichment score required for a cell to pass filtering.',
+                        enrichment score required for a cell to pass \
+                        filtering.',
             batch_table_column=True,
             hidden=True
         ),
@@ -207,25 +212,25 @@ metadata = LatchMetadata(
             description='iterations parameter from addIterativeLSI function.',
             batch_table_column=True,
             hidden=True
-        ),                
+        ),
         'lsi_resolution': LatchParameter(
             display_name='LSI resolution',
             description='resolution parameter from \
                         addIterativeLSI/clusterParams function.',
             batch_table_column=True
-        ),                
+        ),
         'lsi_varfeatures': LatchParameter(
             display_name='LSI varFeatures',
             description='varFeatures parameter from addIterativeLSI function; \
                         each will correspond to a umap.pdf, the last in the \
                         will be used to make the RDS object.',
             batch_table_column=True
-        ),              
+        ),
         'clustering_resolution': LatchParameter(
             display_name='clustering resolution',
             description='resolution parameter from addClusters function.',
             batch_table_column=True
-        ),              
+        ),
         'umap_mindist': LatchParameter(
             display_name='UMAP minimum distance',
             description='minDist parameter from addUMAP function.',
@@ -240,12 +245,13 @@ metadata = LatchMetadata(
         ),
         'project_table_id': LatchParameter(
             display_name='The ID of the SOWs Registry table',
-            description='The optimized ArchR project will be inserted into the \
-                SOW table for the corresponding runs.'
-        )                  
+            description='The optimized ArchR project will be inserted into \
+                the SOW table for the corresponding runs.'
+        )
     },
     tags=[],
 )
+
 
 @workflow(metadata)
 def archr_workflow(
@@ -254,34 +260,37 @@ def archr_workflow(
     project_name: str,
     run_table_id: str = "761",
     project_table_id: str = "779",
-    upload: bool=False,
-    tile_size: int=5000,
-    min_TSS: float=2.0,
-    min_frags: int=0,
-    lsi_iterations: int=2,
-    lsi_resolution: List[float]=[0.5],
-    lsi_varfeatures: List[int]=[25000],
-    clustering_resolution: List[float]=[1.0],
-    umap_mindist: float=0.0
+    upload: bool = False,
+    tile_size: int = 5000,
+    min_TSS: float = 2.0,
+    min_frags: int = 0,
+    lsi_iterations: int = 2,
+    lsi_resolution: List[float] = [0.5],
+    lsi_varfeatures: List[int] = [25000],
+    clustering_resolution: List[float] = [1.0],
+    umap_mindist: float = 0.0
 ) -> LatchDir:
     ''' Workflow for assessing spatial epigenomic data generated via DBiT-seq.
 
     # optimize archr
 
-    **optimize archr** is a [latch.bio]() workflow for assessing spatial 
-    epigenomic data generated via [DBiT-seq](https://www.nature.com/articles/s41586-022-05094-1).
-    Provided fragments from a single-cell ATAC-seq preprocessing and alignment
+    **optimize archr** is a [latch.bio]() workflow for assessing spatial
+    epigenomic data generated via [DBiT-seq]
+    (https://www.nature.com/articles/s41586-022-05094-1). Provided fragments
+    from a single-cell ATAC-seq preprocessing and alignment
     workflow and spatial information, **optimize archr** returns plots and
     summary statistics to inform further processing.
 
-    The workflow utilizes [ArchR](https://www.archrproject.com/articles/Articles/tutorial.html)
+    The workflow utilizes
+    [ArchR](https://www.archrproject.com/articles/Articles/tutorial.html)
     to generate QC parameters (TSS, fragments per cell) and perform
-    dimensionality reduction/clustering, and [Seurat](https://satijalab.org/seurat/)
+    dimensionality reduction/clustering, and
+    [Seurat](https://satijalab.org/seurat/)
     to spatially align the data.  The workflow can take data from either a
     single tissue-sample analyzed via DBiT-seq or multiple tissue-samples; in
     ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'.  All
     Runs input to **optimize archr** are merged into a single ArchRProject for
-    analysis.  
+    analysis.
 
     ## Inputs
     All input files for **optimize archr** must be on the latch.bio
@@ -316,7 +325,7 @@ def archr_workflow(
       QC results to LIMS
 
     * LSI resolution: A **list** of decimal values used as input to the
-    `clusterParams` parameter of the `addIterativeLSI` function in 
+    `clusterParams` parameter of the `addIterativeLSI` function in
     [ArchR](https://www.archrproject.com/reference/addIterativeLSI.html);
 
     * LSI varFeatures: A **list** of integers used as input to the `varFeatures`
@@ -324,11 +333,11 @@ def archr_workflow(
       [ArchR](https://www.archrproject.com/reference/addIterativeLSI.html);
 
     * clustering resolution: A **list** of decimal values used as input to the
-    `resolution` parameter of the `addClusters` function in 
+    `resolution` parameter of the `addClusters` function in
     [ArchR](https://www.archrproject.com/reference/addClusters.html).
 
-    > The Project also takes a series of single-value parameters that can be 
-    found under the 'Hidden Parameters' dropdown; these parameters are less 
+    > The Project also takes a series of single-value parameters that can be
+    found under the 'Hidden Parameters' dropdown; these parameters are less
     commonly varied inputs to ArchR functions.
 
     ## Running the workflow
@@ -336,16 +345,17 @@ def archr_workflow(
     The **optimize archr** workflow can be found in the
     [Workflows](https://wiki.latch.bio/workflows/overview) module in your
     latch.bio workspace. For access to an ATX-collaborator workspace, please
-    contact your AtlasXomics Support Scientist or email support@atlasxomics.com.
-    See [here](https://wiki.latch.bio/workflows/overview) for general 
+    contact your AtlasXomics Support Scientist or email
+    support@atlasxomics.com. See
+    [here](https://wiki.latch.bio/workflows/overview) for general
     instructions for running workflows in latch.bio.
 
     1. Navigate to the **optimize archr** workflow in the Workflows module in
     your latch.bio workspace.  Ensure you are on the 'Parameters' tab of the
     workflow.
 
-    2. To add Runs to the Project, select the '+ runs' icon.  Add values for the
-      Run parameters described above; repeat for each Run in the Project.
+    2. To add Runs to the Project, select the '+ runs' icon.  Add values for
+    the Run parameters described above; repeat for each Run in the Project.
 
     3. Scroll to the bottom of the page and input values for global project
     parameters.
@@ -353,17 +363,17 @@ def archr_workflow(
     4. Click the 'Hidden Parameters' button and change the global parameters as
       needed.
 
-    5. Click the 'Launch Workflow' button on the bottom-right of the parameters 
-    page.  This will automatically navigate you to the Executions tab of the 
+    5. Click the 'Launch Workflow' button on the bottom-right of the parameters
+    page.  This will automatically navigate you to the Executions tab of the
     workflow.
 
     6. From the Executions tab, you can view the status of the launched
-    workflow. Once the workflow has completed running, the status will change to
-      'Succeeded'; if the workflow has the status 'Failed', please contact an 
-      AtlasXomics Support Scientist.  You can click on the workflow execution to 
-      view a more granular workflow status and see output logs.
+    workflow. Once the workflow has completed running, the status will change
+    to 'Succeeded'; if the workflow has the status 'Failed', please contact an
+    AtlasXomics Support Scientist.  You can click on the workflow execution to
+    view a more granular workflow status and see output logs.
 
-    7. Workflow outputs are loaded into the latch.bio 
+    7. Workflow outputs are loaded into the latch.bio
     [Data module](https://wiki.latch.bio/wiki/data/overview) in the
     `optimize_outs` directory.
 
@@ -385,40 +395,42 @@ def archr_workflow(
 
     * umap_plots.pdf: A PDF containing
     [UMAP plots](https://www.archrproject.com/articles/Articles/tutorial.html#visualizing-in-a-2d-umap-embedding)
-    colored by Run ID and cluster assignment. **optimize archr** generates a 
-    two UMAP plots for each element in the Cartesian product of the **LSI 
-    resolution**, **LSI varFeatures**, and **clustering resolution** parameters.
+    colored by Run ID and cluster assignment. **optimize archr** generates a
+    two UMAP plots for each element in the Cartesian product of the **LSI
+    resolution**, **LSI varFeatures**, and **clustering resolution**
+    parameters.
 
-    * spatialdim_plots.pdf: A PDF containing Seurat 
+    * spatialdim_plots.pdf: A PDF containing Seurat
     [Spatial Plots](https://satijalab.org/seurat/reference/spatialplot) with
-    tixel cluster-assignment overlaid on top of the tissue image.  For each Run,
-      the workflow generates a Spatial Plot for each element in the Cartesian
-      product of the **LSI resolution**, **LSI varFeatures**, and **clustering 
-      resolution** parameters.
+    tixel cluster-assignment overlaid on top of the tissue image.  For each
+    Run, the workflow generates a Spatial Plot for each element in the
+    Cartesian product of the **LSI resolution**, **LSI varFeatures**, and
+    **clustering resolution** parameters.
 
     ## Next Steps
 
     The quality of each Run can be evaluated with the TSS Enrichment and
-    Fragment count medians and the qc plots.  If the quality is deemed 
+    Fragment count medians and the qc plots.  If the quality is deemed
     sufficient for further analysis, the UMAP plots and Spatial Plots can
     be used to inform dimensionality reduction and clustering in further
     analysis.
 
-    Analysis can be performed locally or in a latch.bio 
-    [Pod](https://wiki.latch.bio/wiki/pods/overview).  For access to 
+    Analysis can be performed locally or in a latch.bio
+    [Pod](https://wiki.latch.bio/wiki/pods/overview).  For access to
     ATX-specific Pods, please contact your AtlasXomics Support Scientist.
 
-    Further analysis can also be performed in latch.bio with the **create 
-    ArchRProject** (returns ArchRProject with peak and motif calling) and 
-    **atlasShiny** (returns inputs for the ATX ATAC-seq R Shiny App).  For 
-    access to these workflows, please contact your AtlasXomics Support 
+    Further analysis can also be performed in latch.bio with the **create
+    ArchRProject** (returns ArchRProject with peak and motif calling) and
+    **atlasShiny** (returns inputs for the ATX ATAC-seq R Shiny App).  For
+    access to these workflows, please contact your AtlasXomics Support
     Scientist.
-    
+
 
     ## Support
-    Questions? Comments?  Contact support@atlasxomics.com or post in AtlasXomics
-      [Discord](https://discord.com/channels/1004748539827597413/1005222888384770108).
-      
+    Questions? Comments?  Contact support@atlasxomics.com or post in
+    AtlasXomics
+    [Discord](https://discord.com/channels/1004748539827597413/1005222888384770108).
+
     '''
 
     results_dir = archr_task(
@@ -444,11 +456,12 @@ def archr_workflow(
 
     return lims_task(results_dir=results_dir, upload=upload)
 
+
 LaunchPlan(
     archr_workflow,
     'defaults',
     {
-    'runs' : [
+    'runs': [
         Run(
             'default',
             LatchFile('latch:///atac_outs/demo/outs/demo_fragments.tsv.gz'),
@@ -457,10 +470,10 @@ LaunchPlan(
             LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv'),
             )
         ],
-    'project_name' : 'demo',
-    'genome' : Genome.hg38,
-    'upload' : False,
-    'run_table_id': '761',
-    'project_table_id': '779'
+        'project_name': 'demo',
+        'genome': Genome.hg38,
+        'upload': False,
+        'run_table_id': '761',
+        'project_table_id': '779'
     },
 )
