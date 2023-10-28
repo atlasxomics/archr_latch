@@ -82,7 +82,7 @@ def archr_task(
     _archr_cmd.extend(runs)
     subprocess.run(_archr_cmd)
     out_dir = project_name
-    mkdir(out_dir)
+    msubprocess.run(['mkdir', f'{out_dir}'])
 
     figures = glob.glob('*_plots.pdf')
 
