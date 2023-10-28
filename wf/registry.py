@@ -75,7 +75,7 @@ def upload_to_registry(
 ):
     run_table = Table(run_table_id)
     project_table = Table(project_table_id)
-    runs=initialize_runs(projects)
+    runs=initialize_runs(projects, project_table_id, run_table_id)
     try:
         with run_table.update() as updater:
             for run in runs:
