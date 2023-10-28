@@ -82,8 +82,9 @@ def archr_task(
     _archr_cmd.extend(runs)
     subprocess.run(_archr_cmd)
     out_dir = project_name
-    msubprocess.run(['mkdir', f'{out_dir}'])
-
+    mkdir_cmd = ['mkdir'] + [out_dir]
+    subprocess.run(mkdir_cmd)
+    
     figures = glob.glob('*_plots.pdf')
 
     _mv_cmd = ['mv'] + figures + ['medians.csv'] + [out_dir]
