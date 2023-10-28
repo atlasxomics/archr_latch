@@ -53,8 +53,28 @@ RUN python3 -m pip install slims-python-api
 # The following lines are needed to ensure your build environement works
 # correctly with latch.
 RUN python3 -m pip install --upgrade latch
-COPY wf /root/wf
-ARG tag
-ENV FLYTE_INTERNAL_IMAGE $tag
-WORKDIR /root
+# RUN python3 -m pip install latch==2.35.0
 
+# COPY wf /root/wf
+# ARG tag
+# ENV FLYTE_INTERNAL_IMAGE $tag
+# WORKDIR /root
+
+# root@c8b976277765:~# python3 -m pip install latch --upgrade
+#### NEWWWW BELOW
+# Latch SDK
+# DO NOT REMOVE
+run pip install latch==2.36.3
+run mkdir /opt/latch
+
+# Copy workflow data (use .dockerignore to skip files)
+copy . .latch/* /root/
+
+
+# Latch workflow registration metadata
+# DO NOT CHANGE
+arg tag
+# DO NOT CHANGE
+env FLYTE_INTERNAL_IMAGE $tag
+
+workdir /root
