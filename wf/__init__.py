@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List
 from latch.registry.table import Table
 
-from latch import large_task, small_task, workflow, custom_task
+from latch import custom_task, small_task, workflow
 from latch.resources.launch_plan import LaunchPlan
 from latch.types import (
     LatchAuthor,
@@ -33,8 +33,7 @@ class Genome(Enum):
     hg38 = 'hg38'
 
 
-@custom_task(cpu=62, memory=384, storage_gib=500)
-# @large_task
+@custom_task(cpu=20, memory=384, storage_gib=500)
 def archr_task(
     projects: List[Project],
     project_name: str,

@@ -20,7 +20,7 @@ for (i in strsplit(args[7], ",")) {
 }
 for (i in strsplit(args[8], ",")) {
   lsi_varfeatures <- as.integer(i)
-  }
+}
 for (i in strsplit(args[9], ",")) {
   clustering_resolution <- as.numeric(i)
 }
@@ -31,17 +31,17 @@ runs <- strsplit(args[11:length(args)], ",")
 inputs <- c()
 for (run in runs) {
   inputs[run[1]] <- run[2]
-  }
+}
 
 out_dir <- paste0(project_name, "_ArchRProject")
 
 # functions --------------------------------------------------------------------
 
 build_atlas_seurat_object <- function(
-  run_id,
-  matrix,
-  metadata,
-  spatial_path) {
+    run_id,
+    matrix,
+    metadata,
+    spatial_path) {
   # Prepare and combine gene matrix, metadata, and image for seurat object
   # for runs within a project.
 
@@ -75,10 +75,11 @@ spatial_plot <- function(seurat_object, name) {
     pt.size.factor = 1,
     cols = colors,
     stroke = 0) +
-  ggtitle(name) +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    text = element_text(size = 10))
+    ggtitle(name) +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      text = element_text(size = 10)
+    )
 }
 
 feature_plot <- function(seurat_obj, feature, name) {
@@ -87,13 +88,13 @@ feature_plot <- function(seurat_obj, feature, name) {
     features = feature,
     alpha = c(0.2, 1),
     pt.size.factor = 1
-    ) +
-  ggtitle(paste0(feature, " : ", name)) +
-  theme(
-    legend.position = "right",
-    plot.title = element_text(hjust = 0.5),
-    text = element_text(size = 15)
-  )
+  ) +
+    ggtitle(paste0(feature, " : ", name)) +
+    theme(
+      legend.position = "right",
+      plot.title = element_text(hjust = 0.5),
+      text = element_text(size = 15)
+    )
 }
 
 # create archr project --------------------------------------------------------
@@ -102,16 +103,16 @@ addArchRGenome(genome)
 addArchRThreads(threads = 24)
 
 arrow_files <- createArrowFiles(
-   inputFiles = inputs,
-   sampleNames = names(inputs),
-   minTSS = min_tss,
-   minFrags = min_frags,
-   maxFrags = 1e+07,
-   addTileMat = TRUE,
-   addGeneScoreMat = TRUE,
-   offsetPlus = 0,
-   offsetMinus = 0,
-   TileMatParams = list(tileSize = tile_size)
+  inputFiles = inputs,
+  sampleNames = names(inputs),
+  minTSS = min_tss,
+  minFrags = min_frags,
+  maxFrags = 1e+07,
+  addTileMat = TRUE,
+  addGeneScoreMat = TRUE,
+  offsetPlus = 0,
+  offsetMinus = 0,
+  TileMatParams = list(tileSize = tile_size)
 )
 
 proj <- ArchRProject(
@@ -226,21 +227,21 @@ for (row in 1:nrow(parameter_set)) {
     name = "Sample",
     embedding = "UMAP"
   ) +
-  ggtitle(
-    paste(
-      "colored by Sample",
-      lsi_resolution_i,
-      varfeatures_i,
-      clustering_resolution_i
+    ggtitle(
+      paste(
+        "colored by Sample",
+        lsi_resolution_i,
+        varfeatures_i,
+        clustering_resolution_i
+      )
+    ) +
+    theme(plot.title = element_text(size = 10)) +
+    theme(legend.key.size = unit(.5, "cm")) +
+    theme(legend.text = element_text(size = 6)) +
+    guides(colour = guide_legend(
+      override.aes = list(size = 2, alpha = 1),
+      nrow = 2)
     )
-  ) +
-  theme(plot.title = element_text(size = 10)) +
-  theme(legend.key.size = unit(.5, "cm")) +
-  theme(legend.text = element_text(size = 6)) +
-  guides(colour = guide_legend(
-    override.aes = list(size = 2, alpha = 1),
-    nrow = 2)
-  )
 
   p2 <- plotEmbedding(
     ArchRProj = proj_i,
@@ -248,21 +249,21 @@ for (row in 1:nrow(parameter_set)) {
     name = "Clusters",
     embedding = "UMAP"
   ) +
-  ggtitle(
-    paste(
-      "colored by Cluster",
-      lsi_resolution_i,
-      varfeatures_i,
-      clustering_resolution_i
+    ggtitle(
+      paste(
+        "colored by Cluster",
+        lsi_resolution_i,
+        varfeatures_i,
+        clustering_resolution_i
+      )
+    ) +
+    theme(plot.title = element_text(size = 10)) +
+    theme(legend.key.size = unit(.5, "cm")) +
+    theme(legend.text = element_text(size = 6)) +
+    guides(colour = guide_legend(
+      override.aes = list(size = 2, alpha = 1), nrow = 2
+      )
     )
-  ) +
-  theme(plot.title = element_text(size = 10)) +
-  theme(legend.key.size = unit(.5, "cm")) +
-  theme(legend.text = element_text(size = 6)) +
-  guides(colour = guide_legend(
-    override.aes = list(size = 2, alpha = 1),
-    nrow = 2)
-  )
   umapplots[[row]] <- p1 + p2
 
   proj_i <- addImputeWeights(proj_i)
@@ -270,12 +271,12 @@ for (row in 1:nrow(parameter_set)) {
   # create metadata object for Seurat object
   metadata <- getCellColData(ArchRProj = proj_i)
   rownames(metadata) <- str_split_fixed(
-  str_split_fixed(
-    row.names(metadata),
-    "#",
-    2)[, 2],
-  "-",
-  2)[, 1]
+    str_split_fixed(
+      row.names(metadata),
+      "#",
+      2)[, 2],
+    "-",
+    2)[, 1]
   metadata["log10_nFrags"] <- log(metadata$nFrags)
 
   # create gene matrix for Seurat object
@@ -311,7 +312,7 @@ for (row in 1:nrow(parameter_set)) {
       )
     )
     dimplots[[run[1]]][[row]] <- p1
-    }
+  }
 }
 
 # save umap plots in a single pdf
@@ -335,9 +336,9 @@ for (obj in seurat_objs) {
   nfrags_plot <- feature_plot(obj, "log10_nFrags", name)
   tss_plot <- feature_plot(obj, "TSSEnrichment", name)
 
-    print(nfrags_plot)
-    print(tss_plot)
-    par(newpage = TRUE)
+  print(nfrags_plot)
+  print(tss_plot)
+  par(newpage = TRUE)
 
 }
 dev.off()
