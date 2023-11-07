@@ -9,6 +9,7 @@ from latch.functions.messages import message
 
 logging.basicConfig(format="%(levelname)s - %(asctime)s - %(message)s")
 
+
 @dataclass
 class Run:
     run_id: str
@@ -21,18 +22,25 @@ class Run:
         'latch:///spatials/demo/spatial/tissue_positions_list.csv'
     )
 
+
 @dataclass
 class Project:
     project_id: str
     cleaned_frag_file: bool
 
-def initialize_runs(projects: List[Project], project_table_id: str, run_table_id: str) -> List[Run]:
+
+def initialize_runs(
+    projects: List[Project],
+    project_table_id: str,
+    run_table_id: str
+) -> List[Run]:
+
     runs = []
-    project_table=Table(project_table_id)
-    run_table=Table(run_table_id)
+    project_table = Table(project_table_id)
+    run_table = Table(run_table_id)
     try:
         for p in projects:
-            for page in project_table.list_records(): 
+            for page in project_table.list_records():
                 for p_id, record in page.items():
                     p_id = record.get_name()
                     if p_id == p.project_id:
@@ -45,26 +53,48 @@ def initialize_runs(projects: List[Project], project_table_id: str, run_table_id
                                     try:
                                         if p.cleaned_frag_file:
                                             run_fragments_file = run_info['cleaned_fragment_file']
-                                        else:   
+                                        else:
                                             run_fragments_file = run_info['fragments_file']
                                         try:
                                             run_condition = run_info['condition']
                                         except:
                                             run_condition = ""
+
                                         run_spatial_dir = run_info['spatial_directory']
                                         run_positions_file = run_info['positions_file']
-                                        run_fragments_file = LatchFile(run_fragments_file.local_path, run_fragments_file.local_path).local_path
-                                        run_positions_file = LatchFile(run_positions_file.local_path, run_positions_file.local_path).local_path
-                                        run_spatial_dir = LatchDir(run_spatial_dir.local_path, run_spatial_dir.local_path).local_path
-                                        runs.append(Run(run_id, run_fragments_file, run_condition, run_spatial_dir, run_positions_file))
+                                        run_fragments_file = LatchFile(
+                                            run_fragments_file.local_path,
+                                            run_fragments_file.local_path
+                                        ).local_path
+                                        run_positions_file = LatchFile(
+                                            run_positions_file.local_path,
+                                            run_positions_file.local_path
+                                        ).local_path
+                                        run_spatial_dir = LatchDir(
+                                            run_spatial_dir.local_path,
+                                            run_spatial_dir.local_path
+                                        ).local_path
+                                        runs.append(
+                                            Run(
+                                                run_id,
+                                                run_fragments_file,
+                                                run_condition,
+                                                run_spatial_dir,
+                                                run_positions_file
+                                            )
+                                        )
                                     except:
-                                        print(f"Data missing for run: {run_id}")
+                                        print(
+                                            f"Data missing for run: {run_id}"
+                                        )
                         except:
                             break
         return runs
+
     except Exception as err:
         print(f"Unexpected {err=}, {type(err)=}")
         return
+
 
 @small_task(retries=0)
 def upload_to_registry(
@@ -75,10 +105,10 @@ def upload_to_registry(
 ):
     run_table = Table(run_table_id)
     project_table = Table(project_table_id)
-    runs=initialize_runs(projects, project_table_id, run_table_id)
+    runs = initialize_runs(projects, project_table_id, run_table_id)
 
     try:
-        
+
         with project_table.update() as updater:
             for p in projects:
                 message(

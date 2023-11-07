@@ -11,21 +11,19 @@ import subprocess
 from enum import Enum
 from pathlib import Path
 from typing import List
-from latch.registry.table import Table
 
 from latch import custom_task, small_task, workflow
 from latch.resources.launch_plan import LaunchPlan
 from latch.types import (
     LatchAuthor,
     LatchDir,
-    LatchFile,
     LatchMetadata,
     LatchParameter,
     LatchRule
 )
 
 import wf.lims as lims
-from wf.registry import Run, upload_to_registry, Project, initialize_runs
+from wf.registry import upload_to_registry, Project, initialize_runs
 
 
 class Genome(Enum):
@@ -50,8 +48,8 @@ def archr_task(
     run_table_id: str,
 ) -> LatchDir:
 
-    runs =[]
-    runs=initialize_runs(projects, project_table_id, run_table_id)
+    runs = []
+    runs = initialize_runs(projects, project_table_id, run_table_id)
     _archr_cmd = [
         'Rscript',
         '/root/wf/archr_objs.R',
@@ -83,7 +81,7 @@ def archr_task(
     out_dir = project_name
     mkdir_cmd = ['mkdir'] + [out_dir]
     subprocess.run(mkdir_cmd)
-    
+
     figures = glob.glob('*_plots.pdf')
 
     _mv_cmd = ['mv'] + figures + ['medians.csv'] + [out_dir]
@@ -298,7 +296,7 @@ def archr_workflow(
     ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'. Multiple Runs are linked
     to a Project, which is the input into **optimize archr**. All
     Runs inputted to **optimize archr** through Project(s) are merged into a single ArchRProject for
-    analysis. 
+    analysis.
 
     ## Inputs
     All input files for **optimize archr** must be on the latch.bio
@@ -470,15 +468,11 @@ LaunchPlan(
     archr_workflow,
     'defaults',
     {
-    'projects' : [
-        Project(
-            'demo_row_archr', False
-            )
-        ],
-    'project_name' : 'demo',
-    'genome' : Genome.hg38,
-    'run_table_id': '761',
-    'project_table_id': '917',
+        'projects': [Project('demo_row_archr', False)],
+        'project_name': 'demo',
+        'genome': Genome.hg38,
+        'run_table_id': '761',
+        'project_table_id': '917',
     },
 )
 
