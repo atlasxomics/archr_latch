@@ -52,6 +52,7 @@ RUN python3 -m pip install slims-python-api
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
 # correctly with latch.
+RUN echo sup
 RUN python3 -m pip install --upgrade latch
 COPY wf /root/wf
 ARG tag

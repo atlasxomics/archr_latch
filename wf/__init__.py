@@ -12,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List
 
-from latch import large_task, small_task, workflow
+from latch import custom_task, small_task, workflow
 from latch.resources.launch_plan import LaunchPlan
 from latch.types import (
     LatchAuthor,
@@ -32,7 +32,7 @@ class Genome(Enum):
     hg38 = 'hg38'
 
 
-@large_task
+@custom_task(cpu=20, memory=384, storage_gib=3000)
 def archr_task(
     runs: List[Run],
     project_name: str,
