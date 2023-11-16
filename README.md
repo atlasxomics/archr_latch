@@ -1,4 +1,4 @@
-# optimize archr
+# optimize archr (Registry integration)
 
 <div align="center">
     <img src="images/data.png" alt="data" width="1000"/>
