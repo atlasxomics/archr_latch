@@ -461,15 +461,19 @@ LaunchPlan(
     archr_workflow,
     'defaults',
     {
-    'runs': [
-        Run(
-            'default',
-            LatchFile('latch:///atac_outs/demo/outs/demo_fragments.tsv.gz'),
-            'demo',
-            LatchDir('latch:///spatials/demo/spatial'),
-            LatchFile('latch:///spatials/demo/spatial/tissue_positions_list.csv'),
-            )
-        ],
+        'runs': [
+            Run(
+                'default',
+                LatchFile(
+                    'latch:///chromap_outputs/demo/chromap_output/fragments.tsv.gz'
+                ),
+                'demo',
+                LatchDir('latch:///spatials/demo/spatial'),
+                LatchFile(
+                    'latch:///spatials/demo/spatial/tissue_positions_list.csv'
+                ),
+                )
+            ],
         'project_name': 'demo',
         'genome': Genome.hg38,
         'upload': False,
