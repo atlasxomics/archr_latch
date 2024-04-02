@@ -13,6 +13,7 @@ RUN apt-get update -y && \
         libatlas-base-dev \
         libbz2-dev \        
         libcurl4-openssl-dev \
+        libcairo2-dev \
         libfontconfig1-dev \
         libfreetype6-dev \
         libgit2-dev \
@@ -36,18 +37,21 @@ RUN apt-get update -y && \
         zlib1g-dev        
 
 # Have to install devtools like this; see https://stackoverflow.com/questions/20923209, also cairo
-RUN apt-get install -y r-cran-devtools libcairo2-dev
+RUN apt-get install -y r-cran-devtools
 
-# Install packages
-RUN R -e "install.packages(c('Cairo', 'BiocManager', 'Matrix', 'Seurat'))"
-RUN R -e "devtools::install_github('immunogenomics/harmony')"
-RUN R -e "devtools::install_github('GreenleafLab/ArchR', ref='master', repos = BiocManager::repositories())"
-RUN R -e "library('ArchR'); ArchR::installExtraPackages()"
+# Installation of R packages with renv
+RUN R -e "install.packages('renv', repos = 'https://cran.r-project.org/src/contrib/renv_1.0.5.tar.gz', type = 'source')"
+COPY renv.lock /root/renv.lock
+COPY .Rprofile /root/.Rprofile
+RUN mkdir /root/renv
+COPY renv/activate.R /root/renv/activate.R
+COPY renv/settings.json /root/renv/settings.json
+RUN R -e "renv::restore()"
 
-RUN R -e "BiocManager::install('BSgenome.Mmusculus.UCSC.mm10')"
-RUN R -e "BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')"
 
-RUN python3 -m pip install slims-python-api
+# Install python packages
+COPY requirements.txt /root/requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
