@@ -58,8 +58,18 @@ RUN python3 -m pip install -r requirements.txt
 # correctly with latch.
 RUN echo sup
 RUN python3 -m pip install --upgrade latch
-COPY wf /root/wf
-ARG tag
-ENV FLYTE_INTERNAL_IMAGE $tag
-WORKDIR /root
 
+# DO NOT REMOVE
+run pip install latch==2.36.3
+run mkdir /opt/latch
+
+# Copy workflow data (use .dockerignore to skip files)
+copy . .latch/* /root/
+
+# Latch workflow registration metadata
+# DO NOT CHANGE
+arg tag
+# DO NOT CHANGE
+env FLYTE_INTERNAL_IMAGE $tag
+
+workdir /root
