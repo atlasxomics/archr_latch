@@ -56,8 +56,20 @@ RUN python3 -m pip install -r requirements.txt
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
 # correctly with latch.
+
 RUN python3 -m pip install --upgrade latch
-COPY wf /root/wf
+
+# DO NOT REMOVE
+RUN pip install latch==2.36.3
+RUN mkdir /opt/latch
+
+# Copy workflow data (use .dockerignore to skip files)
+COPY . .latch/* /root/
+
+# Latch workflow registration metadata
+# DO NOT CHANGE
 ARG tag
+# DO NOT CHANGE
 ENV FLYTE_INTERNAL_IMAGE $tag
+
 WORKDIR /root
