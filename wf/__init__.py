@@ -17,13 +17,14 @@ from latch.resources.launch_plan import LaunchPlan
 from latch.types import (
     LatchAuthor,
     LatchDir,
+    LatchFile,
     LatchMetadata,
     LatchParameter,
     LatchRule
 )
 
 import wf.lims as lims
-from wf.registry import upload_to_registry, Project, initialize_runs
+from wf.registry import Run, upload_to_registry
 
 
 class Genome(Enum):
@@ -31,9 +32,9 @@ class Genome(Enum):
     hg38 = 'hg38'
 
 
-@custom_task(cpu=20, memory=384, storage_gib=500)
+@custom_task(cpu=20, memory=384, storage_gib=3000)
 def archr_task(
-    projects: List[Project],
+    runs: List[Run],
     project_name: str,
     genome: Genome,
     tile_size: int,
@@ -43,13 +44,9 @@ def archr_task(
     lsi_resolution: List[float],
     lsi_varfeatures: List[int],
     clustering_resolution: List[float],
-    umap_mindist: float,
-    project_table_id: str,
-    run_table_id: str,
+    umap_mindist: float
 ) -> LatchDir:
 
-    runs = []
-    runs = initialize_runs(projects, project_table_id, run_table_id)
     _archr_cmd = [
         'Rscript',
         '/root/wf/archr_objs.R',
@@ -68,19 +65,19 @@ def archr_task(
     runs = [
         (
             f'{run.run_id},'
-            f'{run.fragments_file},'
+            f'{run.fragments_file.local_path},'
             f'{run.condition},'
-            f'{run.positions_file},'
-            f'{run.spatial_dir},'
+            f'{run.positions_file.local_path},'
+            f'{run.spatial_dir.local_path},'
             )
         for run in runs
     ]
 
     _archr_cmd.extend(runs)
     subprocess.run(_archr_cmd)
+
     out_dir = project_name
-    mkdir_cmd = ['mkdir'] + [out_dir]
-    subprocess.run(mkdir_cmd)
+    subprocess.run(['mkdir', out_dir])
 
     figures = glob.glob('*_plots.pdf')
 
@@ -156,8 +153,8 @@ metadata = LatchMetadata(
     repository='https://github.com/atlasxomics/archr_latch',
     license='MIT',
     parameters={
-        'projects': LatchParameter(
-            display_name='projects',
+        'runs': LatchParameter(
+            display_name='runs',
             description='List of runs to be analyzed; each run must contain a \
                          run_id and fragments.tsv file; optional: condition, \
                          tissue position file for filtering on/off tissue, \
@@ -241,16 +238,14 @@ metadata = LatchMetadata(
             hidden=True
         ),
         'run_table_id': LatchParameter(
-            display_name='Runs Table ID',
-            description='The ID of the runs table in Registry. \
-            The runs will be updated in Registry with its \
+            display_name='Registry Table ID',
+            description='The runs will be updated in Registry with its \
                 corresponding condition, spatial directory, condition, and \
                 location of the optimized output archR project.'
         ),
         'project_table_id': LatchParameter(
-            display_name='Projects Table ID',
-            description='The ID of the projects/SOW table in Registry.\
-            The optimized ArchR project will be inserted into \
+            display_name='The ID of the SOWs Registry table',
+            description='The optimized ArchR project will be inserted into \
                 the SOW table for the corresponding runs.'
         )
     },
@@ -260,11 +255,11 @@ metadata = LatchMetadata(
 
 @workflow(metadata)
 def archr_workflow(
-    projects: List[Project],
+    runs: List[Run],
     genome: Genome,
     project_name: str,
     run_table_id: str = "761",
-    project_table_id: str = "917",
+    project_table_id: str = "779",
     upload: bool = False,
     tile_size: int = 5000,
     min_TSS: float = 2.0,
@@ -293,9 +288,8 @@ def archr_workflow(
     [Seurat](https://satijalab.org/seurat/)
     to spatially align the data.  The workflow can take data from either a
     single tissue-sample analyzed via DBiT-seq or multiple tissue-samples; in
-    ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'. Multiple Runs are linked
-    to a Project, which is the input into **optimize archr**. All
-    Runs inputted to **optimize archr** through Project(s) are merged into a single ArchRProject for
+    ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'.  All
+    Runs input to **optimize archr** are merged into a single ArchRProject for
     analysis.
 
     ## Inputs
@@ -320,7 +314,7 @@ def archr_workflow(
     * Condition (_optional_):  An experimental Condition descriptor (ie.
     'control', 'diseased')
 
-    Individual runs are linked to a Project, which are all batched with the following global
+    Individual runs are batched in a Project with the following global
     parameters,
 
     * Project Name: A name for the output folder
@@ -360,8 +354,8 @@ def archr_workflow(
     your latch.bio workspace.  Ensure you are on the 'Parameters' tab of the
     workflow.
 
-    2. To add Projects to the workflow, select the '+ Import from Registry' icon.  Select the Project(s)
-    that are linked to the Runs you want to process. Repeat for each Project you want to add to the workflow.
+    2. To add Runs to the Project, select the '+ runs' icon.  Add values for
+    the Run parameters described above; repeat for each Run in the Project.
 
     3. Scroll to the bottom of the page and input values for global project
     parameters.
@@ -382,6 +376,7 @@ def archr_workflow(
     7. Workflow outputs are loaded into the latch.bio
     [Data module](https://wiki.latch.bio/wiki/data/overview) in the
     `optimize_outs` directory.
+
 
     ## Outputs
 
@@ -439,7 +434,7 @@ def archr_workflow(
     '''
 
     results_dir = archr_task(
-        projects=projects,
+        runs=runs,
         project_name=project_name,
         genome=genome,
         tile_size=tile_size,
@@ -449,13 +444,11 @@ def archr_workflow(
         lsi_resolution=lsi_resolution,
         lsi_varfeatures=lsi_varfeatures,
         clustering_resolution=clustering_resolution,
-        umap_mindist=umap_mindist,
-        project_table_id=project_table_id,
-        run_table_id=run_table_id
+        umap_mindist=umap_mindist
     )
 
     upload_to_registry(
-        projects=projects,
+        runs=runs,
         archr_project=results_dir,
         run_table_id=run_table_id,
         project_table_id=project_table_id
@@ -468,29 +461,23 @@ LaunchPlan(
     archr_workflow,
     'defaults',
     {
-        'projects': [Project('demo_row_archr', False)],
+        'runs': [
+            Run(
+                'default',
+                LatchFile(
+                    'latch:///chromap_outputs/demo/chromap_output/fragments.tsv.gz'
+                ),
+                'demo',
+                LatchDir('latch:///spatials/demo/spatial'),
+                LatchFile(
+                    'latch:///spatials/demo/spatial/tissue_positions_list.csv'
+                ),
+                )
+            ],
         'project_name': 'demo',
         'genome': Genome.hg38,
+        'upload': False,
         'run_table_id': '761',
-        'project_table_id': '917',
+        'project_table_id': '779'
     },
 )
-
-# if __name__ == "__main__":
-#     archr_task(
-#         projects=[Project(
-#             project_id="example_proj_opt",
-#             cleaned_frag_file=False
-#         )],
-#         project_name="test",
-#         genome=Genome["mm10"],
-#         tile_size=5000,
-#         min_TSS=2.0,
-#         min_frags=0,
-#         lsi_iterations=2,
-#         lsi_resolution=[0.5],
-#         lsi_varfeatures=[25000],
-#         clustering_resolution=[1.0],
-#         umap_mindist=0.0,
-#         project_table_id="922"
-#     )
