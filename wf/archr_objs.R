@@ -1,8 +1,8 @@
-library(ArchR)
-library(ggplot2)
-library(harmony)
-library(patchwork)
-library(Seurat)
+library("ArchR")
+library("ggplot2")
+library("harmony")
+library("patchwork")
+library("Seurat")
 
 # globals ---------------------------------------------------------------------
 
@@ -74,12 +74,14 @@ spatial_plot <- function(seurat_object, name) {
     group.by = "Clusters",
     pt.size.factor = 1,
     cols = colors,
-    stroke = 0) +
-    ggtitle(name) +
-    theme(
-      plot.title = element_text(hjust = 0.5),
-      text = element_text(size = 10)
-    )
+    stroke = 0,
+    crop = FALSE
+    ) +
+      ggtitle(name) +
+      theme(
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 10)
+      )
 }
 
 feature_plot <- function(seurat_obj, feature, name) {
@@ -87,7 +89,8 @@ feature_plot <- function(seurat_obj, feature, name) {
     object = seurat_obj,
     features = feature,
     alpha = c(0.2, 1),
-    pt.size.factor = 1
+    pt.size.factor = 1,
+    crop = FALSE
   ) +
     ggtitle(paste0(feature, " : ", name)) +
     theme(
