@@ -9,6 +9,7 @@ from latch.functions.messages import message
 
 logging.basicConfig(format="%(levelname)s - %(asctime)s - %(message)s")
 
+
 @dataclass
 class Run:
     run_id: str
@@ -20,6 +21,7 @@ class Run:
     positions_file: LatchFile = LatchFile(
         'latch:///spatials/demo/spatial/tissue_positions_list.csv'
     )
+
 
 @small_task(retries=0)
 def upload_to_registry(

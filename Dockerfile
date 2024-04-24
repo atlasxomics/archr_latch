@@ -40,14 +40,13 @@ RUN apt-get update -y && \
 RUN apt-get install -y r-cran-devtools
 
 # Installation of R packages with renv
-RUN R -e "install.packages('renv', repos = 'https://cran.r-project.org/src/contrib/renv_1.0.5.tar.gz', type = 'source')"
+RUN R -e "install.packages('https://cran.r-project.org/src/contrib/renv_1.0.5.tar.gz', repos = NULL, type = 'source')"
 COPY renv.lock /root/renv.lock
 COPY .Rprofile /root/.Rprofile
 RUN mkdir /root/renv
 COPY renv/activate.R /root/renv/activate.R
 COPY renv/settings.json /root/renv/settings.json
 RUN R -e "renv::restore()"
-
 
 # Install python packages
 COPY requirements.txt /root/requirements.txt
@@ -56,20 +55,8 @@ RUN python3 -m pip install -r requirements.txt
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
 # correctly with latch.
-
 RUN python3 -m pip install --upgrade latch
-
-# DO NOT REMOVE
-RUN pip install latch==2.36.3
-RUN mkdir /opt/latch
-
-# Copy workflow data (use .dockerignore to skip files)
-COPY . .latch/* /root/
-
-# Latch workflow registration metadata
-# DO NOT CHANGE
+COPY wf /root/wf
 ARG tag
-# DO NOT CHANGE
 ENV FLYTE_INTERNAL_IMAGE $tag
-
 WORKDIR /root
