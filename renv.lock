@@ -136,6 +136,15 @@
       ],
       "Hash": "d9ff68dc831249bbf2fe5d1a114fa9ea"
     },
+    "BSgenome.Rnorvegicus.UCSC.rn6": {
+      "Package": "BSgenome.Rnorvegicus.UCSC.rn6",
+      "Version": "1.4.1",
+      "Source": "Bioconductor",
+      "Requirements": [
+        "BSgenome"
+      ],
+      "Hash": "8acfcf465e14c2c5ed00522829f28cc6"
+    },
     "Biobase": {
       "Package": "Biobase",
       "Version": "2.50.0",
