@@ -29,6 +29,7 @@ from wf.registry import upload_to_registry, Project, initialize_runs
 class Genome(Enum):
     mm10 = 'mm10'
     hg38 = 'hg38'
+    rnor6 = 'rnor6'
 
 
 @custom_task(cpu=20, memory=384, storage_gib=500)
@@ -293,10 +294,10 @@ def archr_workflow(
     [Seurat](https://satijalab.org/seurat/)
     to spatially align the data.  The workflow can take data from either a
     single tissue-sample analyzed via DBiT-seq or multiple tissue-samples; in
-    ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'. Multiple Runs are linked
-    to a Project, which is the input into **optimize archr**. All
-    Runs inputted to **optimize archr** through Project(s) are merged into a single ArchRProject for
-    analysis.
+    ATX parlance, tissue-samples analyzed via DBIT-seq are termed 'Runs'.
+    Multiple Runs are linked to a Project, which is the input into **optimize
+    archr**. All Runs inputted to **optimize archr** through Project(s) are
+    merged into a single ArchRProject for analysis.
 
     ## Inputs
     All input files for **optimize archr** must be on the latch.bio
@@ -320,8 +321,8 @@ def archr_workflow(
     * Condition (_optional_):  An experimental Condition descriptor (ie.
     'control', 'diseased')
 
-    Individual runs are linked to a Project, which are all batched with the following global
-    parameters,
+    Individual runs are linked to a Project, which are all batched with the
+    following global parameters,
 
     * Project Name: A name for the output folder
 
@@ -334,8 +335,8 @@ def archr_workflow(
     `clusterParams` parameter of the `addIterativeLSI` function in
     [ArchR](https://www.archrproject.com/reference/addIterativeLSI.html);
 
-    * LSI varFeatures: A **list** of integers used as input to the `varFeatures`
-      parameter of the `addIterativeLSI` function in
+    * LSI varFeatures: A **list** of integers used as input to the
+      `varFeatures` parameter of the `addIterativeLSI` function in
       [ArchR](https://www.archrproject.com/reference/addIterativeLSI.html);
 
     * clustering resolution: A **list** of decimal values used as input to the
@@ -360,8 +361,9 @@ def archr_workflow(
     your latch.bio workspace.  Ensure you are on the 'Parameters' tab of the
     workflow.
 
-    2. To add Projects to the workflow, select the '+ Import from Registry' icon.  Select the Project(s)
-    that are linked to the Runs you want to process. Repeat for each Project you want to add to the workflow.
+    2. To add Projects to the workflow, select the '+ Import from Registry'
+    icon.  Select the Project(s) that are linked to the Runs you want to
+    process. Repeat for each Project you want to add to the workflow.
 
     3. Scroll to the bottom of the page and input values for global project
     parameters.

@@ -1,4 +1,5 @@
 library("ArchR")
+library("BSgenome.Rnorvegicus.UCSC.rn6")
 library("ggplot2")
 library("harmony")
 library("patchwork")
@@ -41,7 +42,8 @@ build_atlas_seurat_object <- function(
     run_id,
     matrix,
     metadata,
-    spatial_path) {
+    spatial_path
+  ) {
   # Prepare and combine gene matrix, metadata, and image for seurat object
   # for runs within a project.
 
@@ -102,21 +104,40 @@ feature_plot <- function(seurat_obj, feature, name) {
 
 # create archr project --------------------------------------------------------
 
-addArchRGenome(genome)
 addArchRThreads(threads = 24)
 
-arrow_files <- createArrowFiles(
-  inputFiles = inputs,
-  sampleNames = names(inputs),
-  minTSS = min_tss,
-  minFrags = min_frags,
-  maxFrags = 1e+07,
-  addTileMat = TRUE,
-  addGeneScoreMat = TRUE,
-  offsetPlus = 0,
-  offsetMinus = 0,
-  TileMatParams = list(tileSize = tile_size)
-)
+if (genome != "rnor6") {
+
+  addArchRGenome(genome)
+  arrow_files <- createArrowFiles(
+    inputFiles = inputs,
+    sampleNames = names(inputs),
+    minTSS = min_tss,
+    minFrags = min_frags,
+    maxFrags = 1e+07,
+    addTileMat = TRUE,
+    addGeneScoreMat = TRUE,
+    offsetPlus = 0,
+    offsetMinus = 0,
+    TileMatParams = list(tileSize = tile_size)
+  )
+} else if (genome == "rnor6") {
+  load("/root/custom_ArchR_genomes_and_annotations/rn6/rn6_liftoff_mm10NcbiRefSeq_ArchR_annotations.rda")
+  arrow_files <- createArrowFiles(
+    inputFiles = inputs,
+    geneAnnotation = geneAnnotation,
+    genomeAnnotation = genomeAnnotation,
+    sampleNames = names(inputs),
+    minTSS = min_tss,
+    minFrags = min_frags,
+    maxFrags = 1e+07,
+    addTileMat = TRUE,
+    addGeneScoreMat = TRUE,
+    offsetPlus = 0,
+    offsetMinus = 0,
+    TileMatParams = list(tileSize = tile_size)
+  )
+}
 
 proj <- ArchRProject(
   ArrowFiles = arrow_files,
