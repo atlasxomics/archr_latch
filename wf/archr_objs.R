@@ -121,8 +121,15 @@ if (genome != "rnor6") {
     offsetMinus = 0,
     TileMatParams = list(tileSize = tile_size)
   )
+  proj <- ArchRProject(
+    ArrowFiles = arrow_files,
+    outputDirectory = out_dir
+  )
 } else if (genome == "rnor6") {
-  load("/root/custom_ArchR_genomes_and_annotations/rn6/rn6_liftoff_mm10NcbiRefSeq_ArchR_annotations.rda")
+
+  load(
+    "/root/custom_ArchR_genomes_and_annotations/rn6/rn6_liftoff_mm10NcbiRefSeq_ArchR_annotations.rda"
+  )
   arrow_files <- createArrowFiles(
     inputFiles = inputs,
     geneAnnotation = geneAnnotation,
@@ -137,12 +144,13 @@ if (genome != "rnor6") {
     offsetMinus = 0,
     TileMatParams = list(tileSize = tile_size)
   )
+  proj <- ArchRProject(
+    ArrowFiles = arrow_files,
+    outputDirectory = out_dir,
+    geneAnnotation = geneAnnotation,
+    genomeAnnotation = genomeAnnotation
+  )
 }
-
-proj <- ArchRProject(
-  ArrowFiles = arrow_files,
-  outputDirectory = out_dir
-)
 
 # Add an additional Conditions column
 for (run in runs) {

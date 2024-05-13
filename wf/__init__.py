@@ -30,6 +30,7 @@ from wf.registry import Run, upload_to_registry
 class Genome(Enum):
     mm10 = 'mm10'
     hg38 = 'hg38'
+    rnor6 = 'rnor6'
 
 
 @custom_task(cpu=20, memory=384, storage_gib=3000)
@@ -328,8 +329,8 @@ def archr_workflow(
     `clusterParams` parameter of the `addIterativeLSI` function in
     [ArchR](https://www.archrproject.com/reference/addIterativeLSI.html);
 
-    * LSI varFeatures: A **list** of integers used as input to the `varFeatures`
-      parameter of the `addIterativeLSI` function in
+    * LSI varFeatures: A **list** of integers used as input to the
+    `varFeatures` parameter of the `addIterativeLSI` function in
       [ArchR](https://www.archrproject.com/reference/addIterativeLSI.html);
 
     * clustering resolution: A **list** of decimal values used as input to the
