@@ -2,6 +2,7 @@
 .ssh_key
 .ssh_key.pub
 fragments.tsv.gz
+fragments.tsv.gz.tbi
 .logs/
 .latch_report.tar.gz
 wf/__pycache__/
@@ -16,3 +17,8 @@ wf/creds.py
 tss_testing.ipynb
 jump_key
 *-checkpoint.ipynb
+tmp/
+ArchRLogs/
+QualityControl/
+**/*.arrow
+ArchRProject/
