@@ -52,6 +52,10 @@ RUN R -e "renv::restore()"
 COPY requirements.txt /root/requirements.txt
 RUN python3 -m pip install -r requirements.txt
 
+# Copy files for .renvignore to work
+COPY archr.Rproj /root/archr.Rproj
+COPY .renvignore /root/.renvignore
+
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
 # correctly with latch.
