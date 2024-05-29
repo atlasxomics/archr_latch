@@ -52,7 +52,12 @@ RUN R -e "renv::restore()"
 COPY requirements.txt /root/requirements.txt
 RUN python3 -m pip install -r requirements.txt
 
+# Add rat genome for archr
 COPY custom_ArchR_genomes_and_annotations/ /root/custom_ArchR_genomes_and_annotations/
+
+# Copy files for .renvignore to work
+COPY archr.Rproj /root/archr.Rproj
+COPY .renvignore /root/.renvignore
 
 # STOP HERE:
 # The following lines are needed to ensure your build environement works
