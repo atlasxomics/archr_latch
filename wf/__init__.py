@@ -82,7 +82,7 @@ def archr_task(
 
     figures = glob.glob('*_plots.pdf')
 
-    _mv_cmd = ['mv'] + figures + ['medians.csv'] + [out_dir]
+    _mv_cmd = ['mv'] + figures + ['medians.csv'] + ['cluster_csvs'] + [out_dir]
 
     subprocess.run(_mv_cmd)
 

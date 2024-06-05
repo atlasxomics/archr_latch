@@ -298,6 +298,22 @@ for (row in 1:nrow(parameter_set)) {
     )
   umapplots[[row]] <- p1 + p2
 
+  # output tables with cell-cluster mapping
+  clst_df <- getCellColData(proj_i, select = "Clusters")
+  clst_df <- data.frame(
+    barcodes = rownames(clst_df), clst_df, row.names = NULL
+  )
+  clst_df$barcodes <- sub(".*#(.*?)-.*", "\\1", clst_df$barcodes)
+
+  cl_name = paste(
+    run[1],
+    lsi_resolution_i,
+    varfeatures_i,
+    clustering_resolution_i,
+    sep = "-"
+  )
+  write.csv(clst_df, paste0(cl_name, "_bc-clusters.csv"), row.names = FALSE)
+
   proj_i <- addImputeWeights(proj_i)
 
   # create metadata object for Seurat object
@@ -374,3 +390,8 @@ for (obj in seurat_objs) {
 
 }
 dev.off()
+
+# move cluster-map tables into a new dir
+dir.create("cluster_csvs")
+clstr_ids <- Sys.glob("*_bc-clusters.csv")
+file.copy(clstr_ids, "cluster_csvs")
